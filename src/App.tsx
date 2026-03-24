@@ -31,7 +31,8 @@ import {
   Coins,
   Star,
   Mic,
-  MicOff
+  MicOff,
+  UserPlus
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { GoogleGenAI, Modality } from "@google/genai";
@@ -443,6 +444,8 @@ export default function App() {
   const [motivationMsg, setMotivationMsg] = useState('');
   const [isMonitoring, setIsMonitoring] = useState(false);
   const [friendsList, setFriendsList] = useState<any[]>([]);
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [socialTab, setSocialTab] = useState<'friends' | 'search'>('friends');
   const [searchQuery, setSearchQuery] = useState('');
   const [questTimer, setQuestTimer] = useState(24 * 60 * 60); // 24 hours global timer
   const [mysteriousTimer, setMysteriousTimer] = useState(15 * 60); // 15 minutes for mysterious quest
@@ -561,7 +564,7 @@ export default function App() {
 
   useEffect(() => {
     if (!searchQuery) {
-      setFriendsList([]);
+      setSearchResults([]);
       return;
     }
 
@@ -575,7 +578,7 @@ export default function App() {
       const results = querySnapshot.docs
         .map(doc => doc.data())
         .filter(u => u.uid !== user?.uid);
-      setFriendsList(results);
+      setSearchResults(results);
     };
 
     const timeoutId = setTimeout(searchUsers, 500);
@@ -1378,43 +1381,94 @@ export default function App() {
       className="space-y-6"
     >
       <div className="hologram-panel p-6 rounded-3xl">
-        <h3 className="text-xl font-bold font-cairo mb-6 flex items-center gap-2 text-blue-400">
-          <Users size={24} />
-          الأصدقاء
-        </h3>
-
-        <div className="relative mb-6">
-          <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40" size={18} />
-          <input 
-            type="text" 
-            placeholder="البحث عن صيادين..."
-            className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pr-10 pl-4 text-sm font-cairo focus:outline-none focus:border-blue-400/50"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-xl font-bold font-cairo flex items-center gap-2 text-blue-400">
+            <Users size={24} />
+            {socialTab === 'friends' ? 'أصدقائي' : 'البحث عن صيادين'}
+          </h3>
+          <div className="flex gap-2">
+            <button 
+              onClick={() => { setSocialTab('friends'); playSystemSound('click'); }}
+              className={`px-3 py-1 rounded-lg text-xs font-bold font-cairo transition-all ${socialTab === 'friends' ? 'bg-blue-500 text-white' : 'bg-white/5 text-white/40'}`}
+            >
+              أصدقائي
+            </button>
+            <button 
+              onClick={() => { setSocialTab('search'); playSystemSound('click'); }}
+              className={`px-3 py-1 rounded-lg text-xs font-bold font-cairo transition-all ${socialTab === 'search' ? 'bg-blue-500 text-white' : 'bg-white/5 text-white/40'}`}
+            >
+              البحث
+            </button>
+          </div>
         </div>
 
+        {socialTab === 'search' && (
+          <div className="relative mb-6">
+            <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40" size={18} />
+            <input 
+              type="text" 
+              placeholder="البحث عن صيادين..."
+              className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pr-10 pl-4 text-sm font-cairo focus:outline-none focus:border-blue-400/50"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+        )}
+
         <div className="space-y-3">
-          {friendsList.length > 0 ? (
-            friendsList.map((friend) => (
-              <div key={friend.uid} className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/10">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full overflow-hidden border border-blue-400/30">
-                    <img src={friend.photoURL} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+          {socialTab === 'friends' ? (
+            friendsList.length > 0 ? (
+              friendsList.map((friend) => (
+                <div key={friend.uid} className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/10">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full overflow-hidden border border-blue-400/30">
+                      <img src={friend.photoURL} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                    </div>
+                    <div>
+                      <p className="font-bold font-cairo text-sm">{friend.displayName}</p>
+                      <p className="text-[10px] text-blue-400 font-orbitron">@{friend.username}</p>
+                      <p className="text-[10px] text-white/40 font-orbitron">LV. {friend.level}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-bold font-cairo text-sm">{friend.displayName}</p>
-                    <p className="text-[10px] text-blue-400 font-orbitron">@{friend.username}</p>
-                    <p className="text-[10px] text-white/40 font-orbitron">LV. {friend.level}</p>
-                  </div>
+                  <button className="p-2 text-white/40 hover:text-white"><ChevronRight size={20} className="rotate-180" /></button>
                 </div>
-                <button className="p-2 text-white/40 hover:text-white"><ChevronRight size={20} className="rotate-180" /></button>
+              ))
+            ) : (
+              <div className="text-center py-8 text-white/40 font-cairo">
+                لا يوجد أصدقاء حالياً
               </div>
-            ))
+            )
           ) : (
-            <div className="text-center py-8 text-white/40 font-cairo">
-              لا يوجد أصدقاء حالياً
-            </div>
+            searchResults.length > 0 ? (
+              searchResults.map((result) => (
+                <div key={result.uid} className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/10">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full overflow-hidden border border-blue-400/30">
+                      <img src={result.photoURL} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                    </div>
+                    <div>
+                      <p className="font-bold font-cairo text-sm">{result.displayName}</p>
+                      <p className="text-[10px] text-blue-400 font-orbitron">@{result.username}</p>
+                      <p className="text-[10px] text-white/40 font-orbitron">LV. {result.level}</p>
+                    </div>
+                  </div>
+                  {player?.friends.includes(result.uid) ? (
+                    <span className="text-[10px] text-green-400 font-cairo px-2 py-1 bg-green-400/10 rounded">صديق</span>
+                  ) : (
+                    <button 
+                      onClick={() => addFriend(result.uid)}
+                      className="p-2 bg-blue-500/20 text-blue-400 rounded-lg hover:bg-blue-500/30 transition-all"
+                    >
+                      <UserPlus size={18} />
+                    </button>
+                  )}
+                </div>
+              ))
+            ) : (
+              <div className="text-center py-8 text-white/40 font-cairo">
+                {searchQuery ? 'لا يوجد نتائج' : 'ابدأ البحث عن صيادين لإضافتهم'}
+              </div>
+            )
           )}
         </div>
       </div>
