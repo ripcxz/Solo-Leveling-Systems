@@ -79,6 +79,43 @@ interface Quest {
   duration: number;
 }
 
+interface DungeonTask {
+  id: string;
+  title: string;
+  completed: boolean;
+}
+
+interface ActiveDungeon {
+  id: string;
+  title: string;
+  difficulty: string;
+  reward: number;
+  tasks: DungeonTask[];
+}
+
+const DUNGEON_TASKS_POOL = [
+  "الجري لمدة ساعة",
+  "البطم 30 مرة",
+  "تمرين الضغط 50 مرة",
+  "تمرين القرفصاء 40 مرة",
+  "تمارين البطن 100 مرة",
+  "القفز بالحبل 5 دقائق",
+  "تمرين العقلة 10 مرات",
+  "تمرين البلانك لمدة دقيقتين",
+  "المشي السريع 30 دقيقة",
+  "تمرين الاندفاع 20 مرة لكل ساق",
+  "تمرين تسلق الجبال 50 مرة",
+  "تمرين بيربي 15 مرة",
+  "تمرين رفع الساقين 30 مرة",
+  "تمرين الجسر 40 مرة",
+  "تمرين سوبرمان 20 مرة",
+  "تمرين الغطس للصدر 15 مرة",
+  "تمرين الدراجة الهوائية 50 مرة",
+  "تمرين الركل الخلفي 30 مرة لكل ساق",
+  "تمرين تمدد القطة 10 مرات",
+  "تمرين الوقوف على قدم واحدة لمدة دقيقة لكل قدم"
+];
+
 interface PlayerData {
   uid: string;
   displayName: string;
@@ -101,9 +138,14 @@ interface PlayerData {
   statPoints: number;
   friends: string[];
   lastLoginDate: string;
+  titles: string[];
+  activeTitle: string;
 }
 
 // --- Constants ---
+
+const ALL_TITLES = ["زعيم الظل", "ملك الظلال", "قوه الظل", "الضعيف", "الميت"];
+const INITIAL_TITLES = ["الضعيف", "الميت"];
 
 const INITIAL_STATS: Stats = {
   strength: 10,
@@ -395,34 +437,82 @@ const VaultModal = ({ player, onClose }: { player: PlayerData, onClose: () => vo
         <div className="p-4 bg-white/5 rounded-xl border border-white/10 flex flex-col items-center gap-2">
           <Sword size={32} className="text-blue-400" />
           <p className="text-xs text-white/50 font-cairo">الأسلحة</p>
-          <p className="text-xl font-bold font-orbitron">{player.weapons}</p>
+          <p className="text-xl font-bold font-orbitron">{player.weapons || 0}</p>
         </div>
         <div className="p-4 bg-white/5 rounded-xl border border-white/10 flex flex-col items-center gap-2">
           <Shield size={32} className="text-purple-400" />
           <p className="text-xs text-white/50 font-cairo">الدروع</p>
-          <p className="text-xl font-bold font-orbitron">{player.armors}</p>
+          <p className="text-xl font-bold font-orbitron">{player.armors || 0}</p>
         </div>
         <div className="p-4 bg-white/5 rounded-xl border border-white/10 flex flex-col items-center gap-2">
           <Activity size={32} className="text-green-400" />
           <p className="text-xs text-white/50 font-cairo">العلاجات</p>
-          <p className="text-xl font-bold font-orbitron">{player.healers}</p>
+          <p className="text-xl font-bold font-orbitron">{player.healers || 0}</p>
         </div>
         <div className="p-4 bg-white/5 rounded-xl border border-white/10 flex flex-col items-center gap-2">
           <Zap size={32} className="text-cyan-400" />
           <p className="text-xs text-white/50 font-cairo">المانا</p>
-          <p className="text-xl font-bold font-orbitron">{player.manaPotions}</p>
+          <p className="text-xl font-bold font-orbitron">{player.manaPotions || 0}</p>
         </div>
         <div className="p-4 bg-white/5 rounded-xl border border-white/10 flex flex-col items-center gap-2">
           <Star size={32} className="text-orange-400" />
           <p className="text-xs text-white/50 font-cairo">مضاعف XP</p>
-          <p className="text-xl font-bold font-orbitron">{player.doubleXpPotions}</p>
+          <p className="text-xl font-bold font-orbitron">{player.doubleXpPotions || 0}</p>
         </div>
         <div className="p-4 bg-white/5 rounded-xl border border-white/10 flex flex-col items-center gap-2">
           <Shield size={32} className="text-red-400" />
           <p className="text-xs text-white/50 font-cairo">مفاتيح</p>
-          <p className="text-xl font-bold font-orbitron">{player.bossKeys}</p>
+          <p className="text-xl font-bold font-orbitron">{player.bossKeys || 0}</p>
         </div>
       </div>
+    </div>
+  </motion.div>
+);
+
+const TitlesModal = ({ player, onClose, onSelect }: { player: PlayerData, onClose: () => void, onSelect: (title: string) => void }) => (
+  <motion.div 
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    exit={{ opacity: 0 }}
+    className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/80 backdrop-blur-sm"
+  >
+    <div className="hologram-panel-purple w-full max-w-sm rounded-3xl p-8 border-2 border-purple-500/50">
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-2xl font-black font-cairo text-purple-400">الألقاب الملكية</h2>
+        <button onClick={onClose} className="p-2 text-white/50 hover:text-white"><X size={24} /></button>
+      </div>
+
+      <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+        {ALL_TITLES.map((title) => {
+          const isUnlocked = player.titles?.includes(title);
+          const isActive = player.activeTitle === title;
+          
+          return (
+            <div 
+              key={title}
+              onClick={() => isUnlocked && onSelect(title)}
+              className={`p-4 rounded-xl border transition-all flex items-center justify-between ${
+                isActive ? 'bg-purple-500/20 border-purple-400' : 
+                isUnlocked ? 'bg-white/5 border-white/10 hover:border-purple-400/30 cursor-pointer' : 
+                'bg-black/40 border-white/5 opacity-40 grayscale cursor-not-allowed'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <Trophy size={18} className={isActive ? 'text-purple-400' : 'text-white/20'} />
+                <span className={`font-bold font-cairo ${isActive ? 'text-purple-400' : 'text-white/80'}`}>
+                  {title}
+                </span>
+              </div>
+              {!isUnlocked && <span className="text-[10px] font-cairo text-white/40">غير مفتوح</span>}
+              {isActive && <CheckCircle2 size={16} className="text-purple-400" />}
+            </div>
+          );
+        })}
+      </div>
+      
+      <p className="mt-6 text-[10px] text-center text-white/40 font-cairo">
+        يتم فتح الألقاب من خلال الإنجازات والمهمات الخاصة
+      </p>
     </div>
   </motion.div>
 );
@@ -451,10 +541,94 @@ export default function App() {
   const [mysteriousTimer, setMysteriousTimer] = useState(15 * 60); // 15 minutes for mysterious quest
   const [acceptedQuests, setAcceptedQuests] = useState<Record<string, { timeLeft: number, totalTime: number, active: boolean, finished: boolean }>>({});
   const [boxReward, setBoxReward] = useState<string | null>(null);
+  const [activeDungeon, setActiveDungeon] = useState<ActiveDungeon | null>(null);
+  const [showTitles, setShowTitles] = useState(false);
 
   const handleCloseMysteriousQuest = () => {
     setShowMysteriousQuest(false);
     localStorage.setItem('seenMysteriousQuest', 'true');
+  };
+
+  const enterDungeon = (dungeon: any) => {
+    if (!player || player.bossKeys < parseInt(dungeon.cost)) return;
+    
+    playSystemSound('levelUp');
+    
+    let taskCount = 10;
+    if (dungeon.difficulty === 'متوسط') taskCount = 20;
+    if (dungeon.difficulty === 'صعب') taskCount = 50;
+
+    const tasks: DungeonTask[] = [];
+    for (let i = 0; i < taskCount; i++) {
+      const randomTask = DUNGEON_TASKS_POOL[Math.floor(Math.random() * DUNGEON_TASKS_POOL.length)];
+      tasks.push({
+        id: `task-${i}-${Date.now()}`,
+        title: `${randomTask} (#${i + 1})`,
+        completed: false
+      });
+    }
+
+    setActiveDungeon({
+      id: dungeon.id,
+      title: dungeon.title,
+      difficulty: dungeon.difficulty,
+      reward: parseInt(dungeon.reward),
+      tasks
+    });
+
+    // Deduct key
+    if (user) {
+      updateDoc(doc(db, 'users', user.uid), {
+        bossKeys: player.bossKeys - parseInt(dungeon.cost)
+      });
+    }
+  };
+
+  const toggleDungeonTask = (taskId: string) => {
+    if (!activeDungeon) return;
+    
+    playSystemSound('click');
+    const newTasks = activeDungeon.tasks.map(t => 
+      t.id === taskId ? { ...t, completed: !t.completed } : t
+    );
+    
+    setActiveDungeon({ ...activeDungeon, tasks: newTasks });
+  };
+
+  const finishDungeon = async () => {
+    if (!activeDungeon || !player || !user) return;
+    
+    const allCompleted = activeDungeon.tasks.every(t => t.completed);
+    if (!allCompleted) {
+      setSystemAlert('danger');
+      setMotivationMsg('يجب إكمال جميع المهام للخروج من الديماس!');
+      return;
+    }
+
+    playSystemSound('levelUp');
+    
+    const xpReward = activeDungeon.reward;
+    let newXp = player.xp + xpReward;
+    let newLevel = player.level;
+    let newMaxXp = player.maxXp;
+
+    while (newXp >= newMaxXp) {
+      newXp -= newMaxXp;
+      newLevel += 1;
+      newMaxXp = Math.floor(newMaxXp * 1.2);
+      setLevelUpNotify(newLevel);
+    }
+
+    await updateDoc(doc(db, 'users', user.uid), {
+      xp: newXp,
+      level: newLevel,
+      maxXp: newMaxXp,
+      money: player.streak > 0 ? player.money + 100 : player.money + 50
+    });
+
+    setActiveDungeon(null);
+    setSystemAlert('motivation');
+    setMotivationMsg(`تم تطهير الديماس بنجاح! حصلت على ${xpReward} XP`);
   };
 
   // --- Auth & Sync ---
@@ -514,6 +688,8 @@ export default function App() {
             statPoints: 0,
             friends: [],
             lastLoginDate: new Date().toDateString(),
+            titles: INITIAL_TITLES,
+            activeTitle: 'الضعيف',
           };
           await setDoc(doc(db, 'users', firebaseUser.uid), newPlayer);
           setPlayer(newPlayer);
@@ -828,12 +1004,12 @@ export default function App() {
         model: "gemini-2.5-flash-native-audio-preview-12-2025",
         config: {
           responseModalities: [Modality.AUDIO],
-          systemInstruction: "You are the System Monitor for the Solo Leveling app. Listen to the user's environment and emotional state. \n\n1. If you detect any immediate danger, loud aggressive noises, or threats to the user, respond with 'DANGER_DETECTED'. \n2. If you detect that the user is feeling sad, depressed, crying, or in a low mood, respond with 'SADNESS_DETECTED'. \n\nOtherwise, stay silent. Do not speak. Only respond with these specific keywords when appropriate.",
+          systemInstruction: "You are the System Monitor. Listen to the user's environment. \n\n1. If you detect immediate danger, loud aggressive noises, or threats, output the text 'DANGER_DETECTED'.\n2. If you detect sadness, depression, or low mood, output the text 'SADNESS_DETECTED'.\n\nDO NOT SPEAK. DO NOT OUTPUT ANY AUDIO. ONLY OUTPUT THE TEXT KEYWORDS WHEN DETECTED. STAY SILENT OTHERWISE.",
         },
         callbacks: {
           onopen: () => {
             setIsMonitoring(true);
-            const audioContext = new AudioContext({ sampleRate: 16000 });
+            const audioContext = new AudioContext({ sampleRate: 24000 });
             audioContextRef.current = audioContext;
             const source = audioContext.createMediaStreamSource(stream);
             const processor = audioContext.createScriptProcessor(4096, 1, 1);
@@ -846,7 +1022,7 @@ export default function App() {
               }
               const base64Data = btoa(String.fromCharCode(...new Uint8Array(pcmData.buffer)));
               session.sendRealtimeInput({
-                audio: { data: base64Data, mimeType: 'audio/pcm;rate=16000' }
+                audio: { data: base64Data, mimeType: 'audio/pcm;rate=24000' }
               });
             };
             
@@ -854,15 +1030,12 @@ export default function App() {
             processor.connect(audioContext.destination);
           },
           onmessage: (message) => {
-            const text = message.serverContent?.modelTurn?.parts?.[0]?.text;
+            const text = message.serverContent?.modelTurn?.parts?.find(p => p.text)?.text;
             if (text) {
               if (text.includes('DANGER_DETECTED')) {
                 setSystemAlert('danger');
-                playSystemSound('fail');
-                
-                // Play Battle Music
                 if (!dangerAudioRef.current) {
-                  dangerAudioRef.current = new Audio('https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3'); // Placeholder for the requested song
+                  dangerAudioRef.current = new Audio('https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3'); 
                   dangerAudioRef.current.loop = true;
                 }
                 dangerAudioRef.current.play().catch(e => console.error("Audio play failed:", e));
@@ -878,11 +1051,8 @@ export default function App() {
                 const randomMsg = messages[Math.floor(Math.random() * messages.length)];
                 setMotivationMsg(randomMsg);
                 setSystemAlert('motivation');
-                playSystemSound('success');
-
-                // Play Sadness Music
                 if (!sadnessAudioRef.current) {
-                  sadnessAudioRef.current = new Audio('https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3'); // Placeholder for Dark Aria lv2
+                  sadnessAudioRef.current = new Audio('https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3'); 
                   sadnessAudioRef.current.loop = true;
                 }
                 sadnessAudioRef.current.play().catch(e => console.error("Audio play failed:", e));
@@ -916,6 +1086,14 @@ export default function App() {
       streamRef.current.getTracks().forEach(track => track.stop());
       streamRef.current = null;
     }
+  };
+
+  const selectTitle = async (title: string) => {
+    if (!user || !player) return;
+    playSystemSound('success');
+    await updateDoc(doc(db, 'users', user.uid), { activeTitle: title });
+    setPlayer({ ...player, activeTitle: title });
+    setShowTitles(false);
   };
 
   // --- Render Helpers ---
@@ -976,12 +1154,21 @@ export default function App() {
           <div className="flex-1">
             <div className="flex items-center justify-between">
               <h2 className="text-2xl font-black font-cairo text-glow">{player?.displayName}</h2>
-              <button 
-                onClick={() => setShowNameEdit(!showNameEdit)}
-                className="p-1 text-white/30 hover:text-blue-400 transition-colors"
-              >
-                <Settings size={16} />
-              </button>
+              <div className="flex gap-2">
+                <button 
+                  onClick={() => setShowTitles(true)}
+                  className="p-1 text-purple-400 hover:text-purple-300 transition-colors"
+                  title="الألقاب"
+                >
+                  <Trophy size={18} />
+                </button>
+                <button 
+                  onClick={() => setShowNameEdit(!showNameEdit)}
+                  className="p-1 text-white/30 hover:text-blue-400 transition-colors"
+                >
+                  <Settings size={16} />
+                </button>
+              </div>
             </div>
             <p className="text-xs text-blue-400 font-orbitron">@{player?.username}</p>
             <div className="flex items-center gap-2 mt-1">
@@ -990,7 +1177,9 @@ export default function App() {
                 <Star size={12} fill="currentColor" />
                 <span>STREAK: {player?.streak}</span>
               </div>
-              <span className="text-xs text-white/50 font-cairo uppercase tracking-widest">ملك الظلال</span>
+              {player?.activeTitle && (
+                <span className="text-xs text-purple-400 font-cairo uppercase tracking-widest">[{player.activeTitle}]</span>
+              )}
             </div>
           </div>
         </div>
@@ -1331,48 +1520,118 @@ export default function App() {
     </motion.div>
   );
 
-  const renderDungeons = () => (
-    <motion.div 
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      className="space-y-6"
-    >
-      <div className="hologram-panel p-6 rounded-3xl">
-        <h3 className="text-xl font-bold font-cairo mb-6 flex items-center gap-2 text-red-500">
-          <Shield size={24} />
-          البوابات (الديماس)
-        </h3>
+  const renderDungeons = () => {
+    if (activeDungeon) {
+      return (
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="space-y-6"
+        >
+          <div className="hologram-panel p-6 rounded-3xl border-red-500/50">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-bold font-cairo flex items-center gap-2 text-red-500">
+                <Shield size={24} />
+                {activeDungeon.title}
+              </h3>
+              <span className="text-xs px-3 py-1 bg-red-500/20 rounded-full text-red-400 font-cairo">
+                {activeDungeon.difficulty}
+              </span>
+            </div>
 
-        <div className="space-y-4">
-          {[
-            { id: 'd1', title: 'بوابة الرتبة E', difficulty: 'سهل', reward: '500 XP', cost: '1 مفتاح' },
-            { id: 'd2', title: 'بوابة الرتبة D', difficulty: 'متوسط', reward: '1200 XP', cost: '2 مفتاح' },
-            { id: 'd3', title: 'بوابة الرتبة C', difficulty: 'صعب', reward: '3000 XP', cost: '5 مفتاح' },
-          ].map((dungeon) => (
-            <div key={dungeon.id} className="p-4 bg-red-900/10 border border-red-500/20 rounded-2xl group hover:border-red-500/50 transition-all">
-              <div className="flex justify-between items-center mb-2">
-                <h4 className="font-bold font-cairo text-red-400">{dungeon.title}</h4>
-                <span className="text-[10px] px-2 py-1 bg-red-500/20 rounded text-red-400 font-cairo">{dungeon.difficulty}</span>
-              </div>
-              <p className="text-xs text-white/50 font-cairo mb-4">مهمة قتالية صعبة تتطلب مهارة عالية</p>
-              <div className="flex justify-between items-center">
-                <div className="flex gap-3 text-[10px] font-cairo text-white/40">
-                  <span className="flex items-center gap-1"><Trophy size={12} className="text-yellow-500" /> {dungeon.reward}</span>
-                  <span className="flex items-center gap-1"><Shield size={12} className="text-blue-400" /> {dungeon.cost}</span>
+            <div className="bg-red-500/5 p-4 rounded-2xl border border-red-500/10 mb-6">
+              <p className="text-sm font-cairo text-red-400/80 text-center">
+                أكمل جميع المهام لتطهير الديماس والحصول على المكافأة
+              </p>
+              <div className="mt-4">
+                <div className="flex justify-between text-[10px] font-cairo mb-1">
+                  <span className="text-white/40">التقدم</span>
+                  <span className="text-red-400">
+                    {activeDungeon.tasks.filter(t => t.completed).length} / {activeDungeon.tasks.length}
+                  </span>
                 </div>
-                <button 
-                  disabled={!player || player.bossKeys < parseInt(dungeon.cost)}
-                  className={`px-4 py-2 rounded-lg text-xs font-bold font-cairo transition-all ${player && player.bossKeys >= parseInt(dungeon.cost) ? 'bg-red-500 text-white shadow-[0_0_10px_rgba(239,68,68,0.5)]' : 'bg-white/5 text-white/20 cursor-not-allowed'}`}
-                >
-                  دخول
-                </button>
+                <ProgressBar 
+                  current={activeDungeon.tasks.filter(t => t.completed).length} 
+                  max={activeDungeon.tasks.length} 
+                  colorClass="bg-red-500" 
+                />
               </div>
             </div>
-          ))}
+
+            <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+              {activeDungeon.tasks.map((task) => (
+                <div 
+                  key={task.id}
+                  onClick={() => toggleDungeonTask(task.id)}
+                  className={`p-4 rounded-xl border transition-all cursor-pointer flex items-center gap-3 ${task.completed ? 'bg-green-500/10 border-green-500/30' : 'bg-white/5 border-white/10 hover:border-red-500/30'}`}
+                >
+                  {task.completed ? (
+                    <CheckCircle2 size={20} className="text-green-500 shrink-0" />
+                  ) : (
+                    <Circle size={20} className="text-white/20 shrink-0" />
+                  )}
+                  <span className={`text-sm font-cairo ${task.completed ? 'text-green-400 line-through' : 'text-white/80'}`}>
+                    {task.title}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            <button 
+              onClick={finishDungeon}
+              className="w-full mt-8 py-4 bg-red-600 text-white rounded-2xl font-cairo font-black text-lg shadow-[0_0_20px_rgba(220,38,38,0.4)] hover:bg-red-500 transition-all"
+            >
+              تطهير الديماس
+            </button>
+          </div>
+        </motion.div>
+      );
+    }
+
+    return (
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="space-y-6"
+      >
+        <div className="hologram-panel p-6 rounded-3xl">
+          <h3 className="text-xl font-bold font-cairo mb-6 flex items-center gap-2 text-red-500">
+            <Shield size={24} />
+            البوابات (الديماس)
+          </h3>
+
+          <div className="space-y-4">
+            {[
+              { id: 'd1', title: 'بوابة الرتبة E', difficulty: 'سهل', reward: '500 XP', cost: '1 مفتاح' },
+              { id: 'd2', title: 'بوابة الرتبة D', difficulty: 'متوسط', reward: '1200 XP', cost: '2 مفتاح' },
+              { id: 'd3', title: 'بوابة الرتبة C', difficulty: 'صعب', reward: '3000 XP', cost: '5 مفتاح' },
+            ].map((dungeon) => (
+              <div key={dungeon.id} className="p-4 bg-red-900/10 border border-red-500/20 rounded-2xl group hover:border-red-500/50 transition-all">
+                <div className="flex justify-between items-center mb-2">
+                  <h4 className="font-bold font-cairo text-red-400">{dungeon.title}</h4>
+                  <span className="text-[10px] px-2 py-1 bg-red-500/20 rounded text-red-400 font-cairo">{dungeon.difficulty}</span>
+                </div>
+                <p className="text-xs text-white/50 font-cairo mb-4">مهمة قتالية صعبة تتطلب مهارة عالية</p>
+                <div className="flex justify-between items-center">
+                  <div className="flex gap-3 text-[10px] font-cairo text-white/40">
+                    <span className="flex items-center gap-1"><Trophy size={12} className="text-yellow-500" /> {dungeon.reward}</span>
+                    <span className="flex items-center gap-1"><Shield size={12} className="text-blue-400" /> {dungeon.cost}</span>
+                  </div>
+                  <button 
+                    onClick={() => enterDungeon(dungeon)}
+                    disabled={!player || player.bossKeys < parseInt(dungeon.cost)}
+                    className={`px-4 py-2 rounded-lg text-xs font-bold font-cairo transition-all ${player && player.bossKeys >= parseInt(dungeon.cost) ? 'bg-red-500 text-white shadow-[0_0_10px_rgba(239,68,68,0.5)]' : 'bg-white/5 text-white/20 cursor-not-allowed'}`}
+                  >
+                    دخول
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
-    </motion.div>
-  );
+      </motion.div>
+    );
+  };
 
   const renderSocial = () => (
     <motion.div 
@@ -1539,6 +1798,9 @@ export default function App() {
         )}
         {showVault && player && (
           <VaultModal player={player} onClose={() => setShowVault(false)} />
+        )}
+        {showTitles && player && (
+          <TitlesModal player={player} onClose={() => setShowTitles(false)} onSelect={selectTitle} />
         )}
         {systemAlert === 'message' && (
           <SystemAlertModal 
