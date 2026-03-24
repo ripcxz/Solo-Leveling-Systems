@@ -1,0 +1,187 @@
+@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Exo+2:ital,wght@0,100..900;1,100..900&family=Cairo:wght@200..1000&display=swap');
+
+@theme {
+  --font-orbitron: "Orbitron", sans-serif;
+  --font-exo: "Exo 2", sans-serif;
+  --font-cairo: "Cairo", sans-serif;
+}
+
+:root {
+  --system-blue: #00d2ff;
+  --system-blue-glow: rgba(0, 210, 255, 0.5);
+  --system-dark: #050b18;
+  --system-border: rgba(0, 210, 255, 0.3);
+  --system-purple: #8a2be2;
+  --system-purple-glow: rgba(138, 43, 226, 0.5);
+}
+
+body {
+  background-color: var(--system-dark);
+  color: white;
+  font-family: var(--font-cairo), var(--font-exo);
+  overflow-x: hidden;
+  margin: 0;
+  padding: 0;
+  direction: rtl;
+}
+
+.hologram-panel {
+  background: rgba(0, 78, 146, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--system-border);
+  box-shadow: 0 0 15px var(--system-blue-glow);
+  position: relative;
+  overflow: hidden;
+}
+
+.hologram-panel-purple {
+  background: rgba(138, 43, 226, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--system-purple);
+  box-shadow: 0 0 15px var(--system-purple-glow);
+  position: relative;
+  overflow: hidden;
+}
+
+.hologram-panel-red {
+  background: rgba(255, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid #ff4444;
+  box-shadow: 0 0 15px rgba(255, 68, 68, 0.5);
+  position: relative;
+  overflow: hidden;
+}
+
+.hologram-panel::before, .hologram-panel-purple::before, .hologram-panel-red::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--system-blue), transparent);
+  animation: scanline 4s linear infinite;
+}
+
+.hologram-panel-purple::before {
+  background: linear-gradient(90deg, transparent, var(--system-purple), transparent);
+}
+
+.hologram-panel-red::before {
+  background: linear-gradient(90deg, transparent, #ff4444, transparent);
+}
+
+@keyframes scanline {
+  0% { transform: translateY(0); opacity: 0; }
+  50% { opacity: 1; }
+  100% { transform: translateY(100%); opacity: 0; }
+}
+
+.text-glow {
+  text-shadow: 0 0 8px var(--system-blue);
+}
+
+.text-glow-purple {
+  text-shadow: 0 0 8px var(--system-purple);
+}
+
+.system-button {
+  background: rgba(0, 210, 255, 0.1);
+  border: 1px solid var(--system-blue);
+  color: var(--system-blue);
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  font-family: var(--font-orbitron);
+  letter-spacing: 1px;
+}
+
+.system-button:hover {
+  background: var(--system-blue);
+  color: var(--system-dark);
+  box-shadow: 0 0 20px var(--system-blue);
+}
+
+.system-button-purple {
+  background: rgba(138, 43, 226, 0.1);
+  border: 1px solid var(--system-purple);
+  color: var(--system-purple);
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  font-family: var(--font-orbitron);
+  letter-spacing: 1px;
+}
+
+.system-button-purple:hover {
+  background: var(--system-purple);
+  color: white;
+  box-shadow: 0 0 20px var(--system-purple);
+}
+
+.system-button:active, .system-button-purple:active {
+  transform: scale(0.95);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--system-dark);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--system-blue);
+  border-radius: 10px;
+}
+
+.quest-item {
+  border-right: 3px solid var(--system-blue);
+  background: rgba(0, 210, 255, 0.05);
+}
+
+.quest-item.completed {
+  border-right-color: #00ff88;
+  background: rgba(0, 255, 136, 0.05);
+}
+
+.stat-bar-bg {
+  background: rgba(255, 255, 255, 0.1);
+  height: 4px;
+  width: 100%;
+}
+
+.stat-bar-fill {
+  background: var(--system-blue);
+  height: 100%;
+  box-shadow: 0 0 10px var(--system-blue);
+}
+
+.level-badge {
+  font-family: var(--font-orbitron);
+  background: linear-gradient(45deg, #004e92, #00d2ff);
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: bold;
+}
+
+.glitch-text {
+  animation: glitch 1s linear infinite;
+}
+
+@keyframes glitch {
+  2%, 64% { transform: translate(2px, 0) skew(0deg); }
+  4%, 60% { transform: translate(-2px, 0) skew(0deg); }
+  62% { transform: translate(0, 0) skew(5deg); }
+}
+
+.hp-bar-fill {
+  background: linear-gradient(90deg, #ff4b2b, #ff416c);
+  box-shadow: 0 0 10px rgba(255, 75, 43, 0.5);
+}
+
+.mp-bar-fill {
+  background: linear-gradient(90deg, #1e90ff, #00bfff);
+  box-shadow: 0 0 10px rgba(30, 144, 255, 0.5);
+}

@@ -1,0 +1,80 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: users
+    // Document ID: userId (UID)
+    // Fields:
+    //   - uid: string (required) - The unique identifier for the user.
+    //   - displayName: string (required) - The name displayed in the app.
+    //   - photoURL: string (optional) - The URL of the user's profile picture.
+    //   - level: integer (required) - The current level of the player.
+    //   - xp: integer (required) - Current experience points.
+    //   - maxXp: integer (required) - Experience points required for the next level.
+    //   - hp: integer (required) - Health points (max 100).
+    //   - mp: integer (required) - Mana points (max 150).
+    //   - statPoints: integer (required) - Available points to spend on stats.
+    //   - stats: map (required) - Map of stats (strength, agility, sense, vitality, intelligence).
+    //   - friends: list (required) - List of friend UIDs.
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+          (request.auth.token.email == "aasfe2fqwfgwg1f123@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    function isValidUser(data) {
+      return data.keys().hasAll(['uid', 'displayName', 'username', 'level', 'xp', 'maxXp', 'hp', 'mp', 'statPoints', 'stats', 'friends', 'money', 'bossKeys', 'healers', 'weapons', 'armors', 'manaPotions', 'doubleXpPotions', 'streak', 'lastLoginDate']) &&
+        data.uid is string && data.uid.size() > 0 &&
+        data.displayName is string && data.displayName.size() > 0 && data.displayName.size() < 100 &&
+        data.username is string && data.username.size() > 0 && data.username.size() < 50 &&
+        (data.photoURL == null || (data.photoURL is string && data.photoURL.size() < 1000)) &&
+        data.level is int && data.level >= 1 &&
+        data.xp is int && data.xp >= 0 &&
+        data.maxXp is int && data.maxXp > 0 &&
+        data.hp is int && data.hp >= 0 && data.hp <= 100 &&
+        data.mp is int && data.mp >= 0 && data.mp <= 150 &&
+        data.money is int && data.money >= 0 &&
+        data.bossKeys is int && data.bossKeys >= 0 &&
+        data.healers is int && data.healers >= 0 &&
+        data.weapons is int && data.weapons >= 0 &&
+        data.armors is int && data.armors >= 0 &&
+        data.manaPotions is int && data.manaPotions >= 0 &&
+        data.doubleXpPotions is int && data.doubleXpPotions >= 0 &&
+        data.streak is int && data.streak >= 0 &&
+        data.statPoints is int && data.statPoints >= 0 &&
+        data.stats is map &&
+        data.friends is list && data.friends.size() <= 100 &&
+        data.lastLoginDate is string;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow create: if isOwner(userId) && isValidUser(request.resource.data);
+      allow update: if (isOwner(userId) && isValidUser(request.resource.data)) || isAdmin();
+      allow delete: if isAdmin();
+    }
+  }
+}

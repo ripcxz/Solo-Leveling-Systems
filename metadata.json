@@ -1,0 +1,5 @@
+{
+  "name": "Solo Leveling System",
+  "description": "A real-life gamification app based on the Solo Leveling System. Track your daily quests, level up, and increase your stats.",
+  "requestFramePermissions": ["microphone"]
+}

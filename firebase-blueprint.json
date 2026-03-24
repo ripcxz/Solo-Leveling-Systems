@@ -1,0 +1,50 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "Represents a player in the Solo Leveling System.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "The unique identifier for the user." },
+        "displayName": { "type": "string", "description": "The name displayed in the app." },
+        "photoURL": { "type": "string", "description": "The URL of the user's profile picture." },
+        "level": { "type": "integer", "description": "The current level of the player." },
+        "xp": { "type": "integer", "description": "Current experience points." },
+        "maxXp": { "type": "integer", "description": "Experience points required for the next level." },
+        "hp": { "type": "integer", "description": "Health points (max 100)." },
+        "mp": { "type": "integer", "description": "Mana points (max 150)." },
+        "money": { "type": "integer", "description": "Current currency balance." },
+        "bossKeys": { "type": "integer", "description": "Number of boss keys owned." },
+        "healers": { "type": "integer", "description": "Number of healing items owned." },
+        "weapons": { "type": "integer", "description": "Number of weapons owned." },
+        "armors": { "type": "integer", "description": "Number of armors owned." },
+        "manaPotions": { "type": "integer", "description": "Number of mana potions owned." },
+        "doubleXpPotions": { "type": "integer", "description": "Number of double XP potions owned." },
+        "streak": { "type": "integer", "description": "Consecutive days logged in." },
+        "statPoints": { "type": "integer", "description": "Available points to spend on stats." },
+        "stats": {
+          "type": "object",
+          "properties": {
+            "strength": { "type": "integer" },
+            "agility": { "type": "integer" },
+            "sense": { "type": "integer" },
+            "vitality": { "type": "integer" },
+            "intelligence": { "type": "integer" }
+          }
+        },
+        "friends": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "List of friend UIDs."
+        }
+      },
+      "required": ["uid", "displayName", "level", "xp", "hp", "mp"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Stores player data."
+    }
+  }
+}
